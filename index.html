@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comm Mastery · 365-Day Project</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+
+/* ─── RESET ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+/* ─── LAYOUT ─────────────────────────────────────── */
+body {
+  display: flex;
+  background: #111111;
+  color: #e8e4dc;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.75;
+  overflow: hidden; /* prevent body scroll — each pane scrolls independently */
+}
+
+/* ─── SIDEBAR ────────────────────────────────────── */
+#sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #0a0a0a;
+  border-right: 1px solid #1e1e1e;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 50;
+}
+#sidebar::-webkit-scrollbar { width: 3px; }
+#sidebar::-webkit-scrollbar-thumb { background: #222; }
+
+.sb-head {
+  padding: 20px 16px 14px;
+  border-bottom: 1px solid #1e1e1e;
+  flex-shrink: 0;
+}
+.sb-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #c8a96e;
+  margin-bottom: 3px;
+}
+.sb-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #333;
+}
+
+.nav-list { flex: 1; padding: 6px 0; }
+
+.nav-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid #111;
+  transition: background 0.1s, border-color 0.1s;
+}
+.nav-item:hover { background: #131313; border-left-color: #444; }
+.nav-item.active { background: #151515; border-left-color: #c8a96e; }
+
+.nav-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: #c8a96e;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.nav-date { font-size: 10px; color: #444; font-weight: 400; }
+.nav-summary { font-size: 11px; color: #3a3a3a; line-height: 1.4; }
+
+.sb-foot {
+  padding: 12px 16px;
+  border-top: 1px solid #1e1e1e;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #2a2a2a;
+  flex-shrink: 0;
+}
+
+/* ─── MAIN PANEL ─────────────────────────────────── */
+#main {
+  margin-left: 220px;
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;   /* THIS is the scroll container */
+  display: flex;
+  flex-direction: column;
+}
+#main::-webkit-scrollbar { width: 5px; }
+#main::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+
+/* top bar */
+.top-bar {
+  background: #0a0a0a;
+  border-bottom: 1px solid #1e1e1e;
+  padding: 13px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  /* NOT sticky — just sits at top of scroll container */
+}
+.top-bar-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #333;
+}
+.top-bar-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #2a2a2a;
+}
+
+/* days container */
+#days-wrap {
+  flex: 1;
+  padding-bottom: 120px;
+}
+
+/* ─── ACCORDION ──────────────────────────────────── */
+.day-section {
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 40px;
+  cursor: pointer;
+  background: #0d0d0d;
+  border-top: 1px solid #1a1a1a;
+  user-select: none;
+  transition: background 0.1s;
+  gap: 12px;
+}
+.day-header:hover { background: #111; }
+
+.dh-left {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+}
+.dh-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: #c8a96e;
+  white-space: nowrap;
+}
+.dh-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #3a3a3a;
+  white-space: nowrap;
+}
+.dh-summary { font-size: 13px; color: #383838; }
+.dh-arrow {
+  font-size: 11px;
+  color: #3a3a3a;
+  flex-shrink: 0;
+  font-family: 'DM Mono', monospace;
+  transition: transform 0.2s;
+}
+
+/* ── THE KEY FIX: use display:none / display:block only ── */
+.day-body { display: none; }
+.day-open  { display: block; }
+
+.day-inner {
+  padding: 36px 40px 52px;
+}
+
+/* ─── THEME: DARK (Day 01) ───────────────────────── */
+.theme-dark {
+  --accent:  #c8a96e;
+  --accent2: #7eb8a4;
+  --accent3: #e07b7b;
+  --surface: #161616;
+  --border:  #2a2a2a;
+  --text:    #e8e4dc;
+  --muted:   #7a7470;
+  --tag-bg:  #1e1e1e;
+  background: #111;
+  color: #e8e4dc;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ─── THEME: LIGHT (Day 02) ──────────────────────── */
+.theme-light {
+  --accent:  #b84c1e;
+  --accent2: #2b6b5a;
+  --accent3: #2a4a7f;
+  --surface: #edeae3;
+  --border:  #d4cfc6;
+  --text:    #1a1814;
+  --muted:   #8a8278;
+  --tag-bg:  #e4e0d8;
+  background: #f5f1eb;
+  color: #1a1814;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+/* ─── CONTENT COMPONENTS ─────────────────────────── */
+.day-inner .section-block {
+  margin-bottom: 52px;
+  border-top: 1px solid var(--border);
+  padding-top: 32px;
+}
+.day-inner .section-block:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+.day-inner .section-label {
+  font-family: 'DM Mono', 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.theme-light .section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.day-inner h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  line-height: 1.22;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.day-inner h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 28px 0 10px;
+}
+.day-inner h3 {
+  font-family: 'DM Mono', 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--accent2);
+  text-transform: uppercase;
+  margin: 26px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.day-inner p { margin-bottom: 14px; font-size: 15px; line-height: 1.8; color: var(--text); }
+.day-inner ul, .day-inner ol { padding-left: 22px; margin-bottom: 14px; }
+.day-inner li { font-size: 15px; margin-bottom: 8px; line-height: 1.75; color: var(--text); }
+.day-inner strong { font-weight: 500; color: var(--text); }
+.day-inner em { font-style: italic; color: var(--accent); }
+.day-inner hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+.day-inner blockquote {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--accent);
+  border-left: 3px solid var(--accent);
+  padding: 2px 0 2px 20px;
+  margin: 22px 0;
+}
+.day-inner .tag {
+  display: inline-block;
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: 'DM Mono', 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  color: var(--muted);
+  margin: 2px;
+}
+.day-inner .callout {
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  padding: 14px 18px;
+  margin: 16px 0;
+  border-radius: 0 4px 4px 0;
+}
+.day-inner .callout p:last-child { margin-bottom: 0; }
+.day-inner .callout.green { border-left-color: var(--accent2); }
+.day-inner .callout.blue  { border-left-color: var(--accent3); }
+.day-inner .callout.red   { border-left-color: var(--accent3); }
+.day-inner .analogy-box {
+  background: rgba(200,169,110,0.05);
+  border: 1px dashed rgba(200,169,110,0.28);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin: 16px 0;
+}
+.theme-light .analogy-box {
+  background: rgba(184,76,30,0.05);
+  border-color: rgba(184,76,30,0.28);
+}
+.day-inner .prompt-box {
+  border-radius: 6px;
+  padding: 18px 22px;
+  margin: 18px 0;
+  background: rgba(126,184,164,0.05);
+  border: 1px solid rgba(126,184,164,0.2);
+}
+.day-inner .prompt-box .prompt-label {
+  font-family: 'DM Mono', 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--accent2);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: block;
+}
+.theme-light .prompt-box {
+  background: rgba(42,74,127,0.05);
+  border-color: rgba(42,74,127,0.2);
+}
+.theme-light .prompt-box .prompt-label { color: #2a4a7f; }
+.day-inner .word-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
+}
+.day-inner .word-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+.day-inner .word-item .term {
+  font-family: 'DM Mono', 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 5px;
+}
+.day-inner .word-item .def {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.day-inner .framework-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px;
+  margin: 14px 0;
+}
+.day-inner .framework-step {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.day-inner .framework-step:last-child { margin-bottom: 0; }
+.day-inner .step-num {
+  font-family: 'DM Mono', 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--accent2);
+  background: rgba(126,184,164,0.08);
+  border: 1px solid rgba(126,184,164,0.22);
+  border-radius: 3px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  margin-top: 3px;
+  min-width: 64px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.day-inner .step-content strong {
+  color: var(--text);
+  font-weight: 500;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 3px;
+}
+.day-inner .step-content span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────── */
+@media (max-width: 680px) {
+  body { overflow: auto; }
+  #sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #1e1e1e;
+  }
+  #main { margin-left: 0; height: auto; overflow-y: visible; }
+  .day-inner { padding: 24px 18px 44px; }
+  .day-header { padding: 14px 18px; }
+  .top-bar { padding: 12px 18px; }
+  .day-inner .word-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sb-head">
+    <div class="sb-title">Comm Mastery</div>
+    <div class="sb-sub">365-Day Project · 2026</div>
+  </div>
+  <div class="nav-list">
+    
+    <div class="nav-item" id="nav-day02-march27-2026" onclick="jumpTo('day02-march27-2026')">
+      <div class="nav-label">Day 002 <span class="nav-date">March 27</span></div>
+      <div class="nav-summary">AI Commoditization · Innovator's Dilemma · SCQA</div>
+    </div>
+    <div class="nav-item" id="nav-day01-march26-2026" onclick="jumpTo('day01-march26-2026')">
+      <div class="nav-label">Day 001 <span class="nav-date">March 26</span></div>
+      <div class="nav-summary">Agentic AI · Thinking Fast & Slow · PREP</div>
+    </div>
+  </div>
+  <div class="sb-foot">2 / 365 days complete</div>
+</nav>
+
+<div id="main">
+  <div class="top-bar">
+    <div class="top-bar-title">Executive Communication · Tech / AI</div>
+    <div class="top-bar-count">Days 001–002</div>
+  </div>
+  <div id="days-wrap">
+    
+  <div class="day-section" id="day02-march27-2026">
+    <div class="day-header" onclick="toggleDay('day02-march27-2026')">
+      <div class="dh-left">
+        <span class="dh-num">Day 002</span>
+        <span class="dh-date">March 27, 2026</span>
+        <span class="dh-summary">AI Commoditization · Innovator's Dilemma · SCQA</span>
+      </div>
+      <span class="dh-arrow" id="arrow-day02-march27-2026">▲</span>
+    </div>
+    <div class="day-body day-open" id="body-day02-march27-2026">
+      <div class="day-inner theme-light">
+        <div style="margin-top:4px; font-size:12px; color: var(--muted);">Executive Communication · Tech/AI Focus</div>
+  </div>
+  <div class="masthead-date">March 27, 2026</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SECTION 1 — TECH CONCEPT                  -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="section-block">
+  <div class="section-label">01 · Daily Tech Concept</div>
+
+  <h1>The Commoditization of Intelligence</h1>
+
+  <p style="color: var(--muted); font-size:14px; margin-bottom:28px;">
+    <span class="tag">AI Economics</span> <span class="tag">Platform Strategy</span> <span class="tag">Market Structure</span>
+  </p>
+
+  <h3>The Concept</h3>
+  <p>
+    Yesterday we talked about what AI agents can <em>do</em>. Today's question is what they <em>cost</em> — and what happens to markets when the answer becomes "almost nothing."
+  </p>
+  <p>
+    This week, Apple announced it will open Siri to any competing AI assistant in iOS 27 — not just OpenAI. Simultaneously, Google's Gemini Flash-Lite dropped to $0.25 per million tokens. Open-source models like Mistral Small 4 now outperform closed systems three to five times their size and cost zero in licensing fees. The pattern is unmistakable: <strong>AI model capability is becoming a commodity.</strong> The strategic question has shifted from "who has the best model?" to "who controls the platform, the data, and the distribution?"
+  </p>
+
+  <div class="analogy-box">
+    <h3 style="margin-top:0; border:none; padding:0; margin-bottom:8px;">The Analogy</h3>
+    <p style="margin-bottom:0;">
+      Think of electricity in the early 20th century. For two decades, generating your own power was a competitive advantage — industrial companies built private plants to power their factories. Then the grid arrived. Once electricity became cheap, reliable infrastructure, the advantage shifted entirely to <em>what you plugged into it</em>. Nobody wins today by generating better electricity. AI model intelligence is following the same arc. The winners won't be the ones with the best model. They'll be the ones who built the best thing on top of a ubiquitous, cheap, powerful grid.
+    </p>
+  </div>
+
+  <h3>How to Speak to It — Executive Mode</h3>
+  <p>The naive take is "AI is getting cheaper, great." The sophisticated take reframes the whole competitive map:</p>
+
+  <div class="callout">
+    <p style="margin-bottom:8px;"><em>"The model wars are effectively over — not because one lab won, but because the underlying intelligence is becoming infrastructure. Apple just proved the point: they're opening Siri to every AI model on the market. When a platform player treats models as interchangeable inputs, you know commoditization has arrived. The question for every company now is: what layer do you own? Because it isn't the model."</em></p>
+  </div>
+
+  <div class="callout green">
+    <p style="margin-bottom:0;"><em>"The analogy I keep coming back to is the database wars of the 90s. Oracle, IBM, Sybase — all fighting over who had the best relational engine. Fast forward: the engine became a commodity, and the winners were the companies that owned the applications sitting on top of it. We're watching the same movie with AI, just at faster speed."</em></p>
+  </div>
+
+  <h3>Peripheral & Opposing Arguments</h3>
+  <p><strong>The counter:</strong> Commoditization isn't uniform. Frontier model capability — the top 1% of reasoning and scientific research — may never commoditize, because the compute requirements are economically brutal. OpenAI just shut down Sora's public API because one minute of video cost more to generate than users would pay. The frontier is pulling ahead faster than the commodity tier catches up.</p>
+
+  <p><strong>The geopolitical wrinkle:</strong> Chinese models (MiniMax M2.5, Qwen 3.5) are now matching US frontier models at a fraction of the cost, and they're open-source. The commoditization pressure isn't just technological — it's geopolitical. The US "tech decoupling" narrative is complicated by the fact that US startups are quietly building on Chinese open-source infrastructure.</p>
+
+  <p><strong>The platform power argument:</strong> Apple opening Siri to all models looks like AI democratization. It's actually a power consolidation move: Apple keeps the relationship with 1.5 billion iPhone users while models compete to be selected. The platform wins by making the thing below it a commodity. Classic move. Seen it before with app stores.</p>
+
+  <h3>Sound Like an Expert — Framing Toolkit</h3>
+  <ul>
+    <li><strong>"The layer question"</strong> — In any platform transition, winners own a layer. Identify which layer before you place strategic bets.</li>
+    <li><strong>"Commoditization pressure"</strong> — A more precise term than "competition." It implies structural price erosion, not just rivalry.</li>
+    <li><strong>"Distribution moat"</strong> — What Apple, Microsoft, and Google have that model labs don't. A billion relationships built before AI existed.</li>
+    <li>Drop in: <em>"The last company to win by having the best model was probably Google in 2023. After that, the game moved to distribution, data, and trust."</em></li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SECTION 2 — BOOK                          -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="section-block">
+  <div class="section-label">02 · Book of the Day</div>
+
+  <h1>The Innovator's Dilemma</h1>
+  <p style="color: var(--muted); font-size: 14px; margin-bottom: 28px;">Clayton Christensen · 1997 · Business Strategy / Technology <span class="tag">Legendary</span></p>
+
+  <h3>Why This Book, Why Today</h3>
+  <p>
+    No book in business history has better predicted the structural dynamics of today's AI market. Christensen's central insight — that the companies most likely to be disrupted are the well-managed ones, precisely because they listen too closely to their best customers — explains why OpenAI, Google, and Anthropic may be simultaneously dominating and building their own coffins. Today's tech concept (commoditization) is Christensen's disruption theory playing out in real time.
+  </p>
+
+  <h3>Core Ideas You Can Reapply</h3>
+
+  <p><strong>Sustaining vs. disruptive innovation.</strong> Sustaining innovations make existing products better for existing customers — GPT-5.4 beating GPT-5.3. Disruptive innovations start as "good enough, but much cheaper" at the low end — Mistral Small 4 running on a single GPU. Incumbents always win the sustaining battle. They almost always lose the disruptive one, because they rationally ignore a market that is initially small, low-margin, and populated by customers they don't want.</p>
+
+  <p><strong>The resource allocation problem.</strong> Disruption doesn't fail because of bad strategy. It fails because large organizations allocate resources toward what their existing customers are paying for. The market's signals are rational — and they're the wrong signals. Every dollar flowing to GPT-5.4 "Pro" features is a dollar not flowing to the $0.25/million-token model that will own the mass market in three years.</p>
+
+  <p><strong>The strategic implication:</strong> If you're a large enterprise building an AI strategy right now, you're at risk of the same failure mode — over-investing in frontier AI capabilities for your power users while the commodity model quietly becomes "good enough" for 90% of your workforce's actual needs. The disruption happens below your line of sight.</p>
+
+  <div class="callout blue">
+    <p style="margin-bottom:0;"><em>"The question Christensen would ask about your AI strategy is not 'what's the best model for your best use case?' It's 'what's the cheapest model that's good enough for your most common use case, and are you building on top of that?'"</em></p>
+  </div>
+
+  <h3>Quote-Worthy Phrases</h3>
+  <blockquote>"The reason why it is so difficult for existing firms to capitalize on disruptive innovations is that their processes and values constitute disabilities when confronted with change."</blockquote>
+  <blockquote>"Customers, not technology, drive disruption. The question is always: which customers are you not yet serving?"</blockquote>
+
+  <h3>In a Debate Setting</h3>
+  <p><strong>Rebuttal to "the big labs will always win":</strong> Christensen would say the opposite — well-managed incumbents are the most vulnerable to disruption precisely because their rational decision-making optimizes for their current customers. The companies that build on cheap, open-source AI for under-served markets are the ones to watch.</p>
+  <p><strong>Peripheral support:</strong> Andy Grove's "Only the Paranoid Survive" extends this — Grove called the moment where disruption arrives a "strategic inflection point," and argued the only way to see it coming is to listen to the people on the edges of your organization, not the center. Applied to AI: your frontline teams using cheap AI tools are the leading indicators, not your AI strategy committee.</p>
+
+  <div class="prompt-box">
+    <span class="prompt-label">💬 Critical Thinking Prompt</span>
+    <p><strong>Prompt:</strong> Christensen argued that incumbents fail not from incompetence but from rational management. Apply this framework: which current AI-first company is most at risk of being disrupted by a cheaper, "good enough" competitor — and what is the rational management decision that will cause it?</p>
+    <hr style="margin: 12px 0;">
+    <p><em>Example answer (form your own first):</em></p>
+    <p>OpenAI is the most interesting candidate. Their rational management decision is to charge premium prices for frontier models to serve the enterprise and developer customers who are their current revenue base. That's a completely sound decision — those customers pay, demand quality, and validate the product. The disruption risk: open-source models (Mistral, Qwen) are approaching "good enough" for 70-80% of enterprise use cases at near-zero cost. The customers OpenAI can't profitably serve — budget-constrained startups, emerging market developers, high-volume low-margin applications — will build entirely on open-source. That ecosystem will compound. Five years from now, OpenAI may find that the mass market learned AI development without them, and the only customers left are the ones who need the absolute frontier. Which is a fine, high-margin niche — unless a Chinese lab closes that gap too.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SECTION 3 — COMM PACK                     -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="section-block">
+  <div class="section-label">03 · Daily Comm Pack</div>
+  <h1>Framework + Word Bank</h1>
+
+  <h2 style="margin-top:24px;">3A · Framework: The SCQA Structure</h2>
+  <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">Source: Barbara Minto, <em>The Pyramid Principle</em> — the foundational McKinsey communication framework. Builds on PREP from Day 1 by adding narrative tension before the answer.</p>
+
+  <p><strong>What it is:</strong> SCQA creates a mini-story arc that pulls the listener forward before you deliver your answer. Where PREP leads with the point, SCQA earns the point by first establishing why it matters. Use SCQA for written communication, presentations, and any setting where you need to frame a problem before solving it.</p>
+
+  <div class="framework-box">
+    <div class="framework-step">
+      <div class="step-num">S — Situation</div>
+      <div class="step-content">
+        <strong>Establish shared ground</strong>
+        <span>State what everyone already knows and agrees on. Keep it brief — this is not your argument, it's the runway.</span>
+      </div>
+    </div>
+    <div class="framework-step">
+      <div class="step-num">C — Complication</div>
+      <div class="step-content">
+        <strong>Introduce the tension</strong>
+        <span>What has changed, gone wrong, or created a new challenge? This is the "but" that makes the situation unstable. The sharper the complication, the more your audience needs your answer.</span>
+      </div>
+    </div>
+    <div class="framework-step">
+      <div class="step-num">Q — Question</div>
+      <div class="step-content">
+        <strong>Surface the implicit question</strong>
+        <span>The question the audience is now asking in their heads. You don't always say this aloud — but knowing it forces you to answer the right thing.</span>
+      </div>
+    </div>
+    <div class="framework-step" style="margin-bottom:0;">
+      <div class="step-num">A — Answer</div>
+      <div class="step-content">
+        <strong>Lead with your recommendation</strong>
+        <span>Now deliver the answer. Because you built the tension, the answer lands with weight. This is where PREP takes over — your answer, your reasons, your example.</span>
+      </div>
+    </div>
+  </div>
+
+  <p><strong>Applied to today's topic</strong> — opening a board presentation on AI strategy:</p>
+
+  <div class="callout green">
+    <p style="margin-bottom:6px;"><strong>[S]</strong> For the past two years, our AI strategy has centered on selecting the best frontier model for each use case.</p>
+    <p style="margin-bottom:6px;"><strong>[C]</strong> This month, Apple opened its platform to every AI model on the market, open-source models matched frontier performance at near-zero cost, and inference prices dropped 80% year-over-year. The model selection game has fundamentally changed.</p>
+    <p style="margin-bottom:6px;"><strong>[Q]</strong> <em>(implied)</em> So where should we actually be placing our bets?</p>
+    <p style="margin-bottom:0;"><strong>[A]</strong> We should stop competing on model selection and start competing on data and distribution — the two layers that commoditization cannot erode.</p>
+  </div>
+
+  <p style="margin-top: 16px; font-size: 14px; color: var(--muted);"><strong>Day 1 vs. Day 2 framework:</strong> Use <em>PREP</em> for impromptu answers and Q&A. Use <em>SCQA</em> for structured presentations, memos, and opening a conversation you're controlling. Together they cover 80% of your executive communication needs.</p>
+
+  <h2 style="margin-top: 40px;">3B · Word Bank</h2>
+
+  <h3>Advanced Lexicon</h3>
+  <div class="word-grid">
+    <div class="word-item"><span class="term">Commoditization</span><span class="def">The process by which a differentiated product becomes interchangeable with competitors'. Use precisely — it implies structural price erosion, not just competition.</span></div>
+    <div class="word-item"><span class="term">Sustaining innovation</span><span class="def">Improvements that serve existing customers better. Christensen's term — signals you know the academic framework behind the debate.</span></div>
+    <div class="word-item"><span class="term">Disruptive innovation</span><span class="def">New entrant starting at the low end, "good enough," then moving up. One of the most misused phrases in business — use it correctly and you signal real fluency.</span></div>
+    <div class="word-item"><span class="term">Distribution moat</span><span class="def">Competitive advantage built on access to customers, not product quality. Apple's 1.5B users. Microsoft's enterprise contracts. Harder to copy than a model.</span></div>
+    <div class="word-item"><span class="term">Inference cost</span><span class="def">The cost of running a trained AI model on new inputs. Falling rapidly — and reshaping who can afford to deploy AI at scale.</span></div>
+    <div class="word-item"><span class="term">Permissive license</span><span class="def">Open-source terms allowing commercial use, modification, and redistribution. Apache 2.0 is the gold standard. "Permissive" signals it's not just free — it's strategically free.</span></div>
+    <div class="word-item"><span class="term">Platform consolidation</span><span class="def">When a layer in the stack absorbs value from above and below. Apple opening Siri is consolidation dressed as openness.</span></div>
+    <div class="word-item"><span class="term">Strategic inflection point</span><span class="def">Andy Grove's term for when a shift in the competitive environment requires a fundamental change in strategy. More dramatic — and more precisely calibrated — than "disruption."</span></div>
+    <div class="word-item"><span class="term">Value migration</span><span class="def">When economic value moves from one part of an industry to another. Right now: migrating from model providers to platform and application layers.</span></div>
+    <div class="word-item"><span class="term">Rational inattention</span><span class="def">The economically logical decision to ignore signals that don't yet affect your core business — the exact mechanism by which incumbents miss disruption.</span></div>
+  </div>
+
+  <h3>Wrapper Phrases</h3>
+  <div class="word-grid">
+    <div class="word-item"><span class="term">"Let me give you the structural read on this."</span><span class="def">Signals you're about to go one level above the surface narrative. Use before a Christensen-style or platform-power argument.</span></div>
+    <div class="word-item"><span class="term">"The movie we've seen before is…"</span><span class="def">Draws a historical analogy without being pedantic. Signals pattern recognition and intellectual range.</span></div>
+    <div class="word-item"><span class="term">"The naive read is X. The more interesting question is Y."</span><span class="def">Elevates the conversation. Positions you as someone who's already past the obvious take.</span></div>
+    <div class="word-item"><span class="term">"What that actually signals is…"</span><span class="def">Translates a surface event into a deeper strategic implication. Use after citing a news development.</span></div>
+    <div class="word-item"><span class="term">"This is a classic layer question."</span><span class="def">Frames a strategic debate in platform terms. Immediately sounds like someone who's thought about this systematically.</span></div>
+    <div class="word-item"><span class="term">"If you zoom out to the 5-year picture…"</span><span class="def">Shifts from reactive to strategic. Useful when the room is stuck in near-term tactics.</span></div>
+    <div class="word-item"><span class="term">"The tell is…"</span><span class="def">Points to a specific evidence signal that reveals the underlying dynamic. Concise, confident, slightly informal — great for podcasts.</span></div>
+    <div class="word-item"><span class="term">"I'd push back on the framing slightly."</span><span class="def">Soft disagreement that doesn't dismiss. Buys you space to reframe without sounding contrarian.</span></div>
+    <div class="word-item"><span class="term">"The thing that most people miss here is…"</span><span class="def">Sets up a contrarian or overlooked insight. Use sparingly — it's powerful because it implies genuine depth.</span></div>
+    <div class="word-item"><span class="term">"That's a product question. The strategy question is different."</span><span class="def">Elevates the level of abstraction. Signals executive-level thinking vs. operational thinking.</span></div>
+  </div>
+
+  <h3>Analogies</h3>
+  <div class="word-grid">
+    <div class="word-item"><span class="term">AI models = the electrical grid</span><span class="def">Once electricity became cheap infrastructure, no one won by generating better power. The winners built things that ran on it.</span></div>
+    <div class="word-item"><span class="term">Apple opening Siri = the app store model in reverse</span><span class="def">In 2008, Apple opened its platform to apps and took the relationship with the user. Same play, new layer.</span></div>
+    <div class="word-item"><span class="term">Frontier AI = Formula 1 engineering</span><span class="def">Extraordinary capability, extraordinary cost, tiny addressable market — and the technology trickles down to road cars eventually anyway.</span></div>
+    <div class="word-item"><span class="term">Open-source AI = the Linux moment</span><span class="def">Linux was "good enough" for servers before it was good enough for everything. The enterprise held out. Then it didn't.</span></div>
+    <div class="word-item"><span class="term">Disruptive innovation = rising floodwater</span><span class="def">You don't notice it until it's in your living room. By then, moving is harder than it looks from the outside.</span></div>
+    <div class="word-item"><span class="term">Commoditization = the race to the bottom that ends in a platform</span><span class="def">Price goes to zero, but the company that controls distribution captures all the value that used to live in the product.</span></div>
+    <div class="word-item"><span class="term">Strategic inflection point = the moment the map becomes wrong</span><span class="def">Grove's point: the map you used to navigate is still accurate — it just no longer matches the terrain.</span></div>
+    <div class="word-item"><span class="term">Rational inattention = the well-lit streetlight problem</span><span class="def">You only look where the light is. Incumbents look where their data is. Disruption happens in the dark.</span></div>
+    <div class="word-item"><span class="term">Distribution moat = the last mile</span><span class="def">The relationship with the end user is the hardest thing to displace. All the model quality in the world doesn't help if you don't have the connection.</span></div>
+    <div class="word-item"><span class="term">Platform opening = the Trojan horse</span><span class="def">Looks like generosity. Is actually a consolidation of the relationship layer while giving away what's becoming worthless anyway.</span></div>
+  </div>
+
+  <h3>Idioms (WSJ / Economist register)</h3>
+  <div class="word-grid">
+    <div class="word-item"><span class="term">"Race to the bottom"</span><span class="def">Competitive dynamic where price or quality degrades as rivals undercut each other. Use carefully — it implies commodity economics, not just competition.</span></div>
+    <div class="word-item"><span class="term">"Table stakes"</span><span class="def">The minimum required to compete. When AI performance becomes table stakes, the differentiation debate shifts elsewhere.</span></div>
+    <div class="word-item"><span class="term">"Double down"</span><span class="def">Increase commitment to a bet. Microsoft "doubling down" on in-house models signals conviction, not panic.</span></div>
+    <div class="word-item"><span class="term">"Quietly wound down"</span><span class="def">The Economist's way of describing a retreat that leadership doesn't want to call a failure. OpenAI "quietly discontinued" Sora.</span></div>
+    <div class="word-item"><span class="term">"Economically irreconcilable"</span><span class="def">When cost and revenue cannot be made to meet, regardless of scale. The most damning phrase in a product post-mortem.</span></div>
+    <div class="word-item"><span class="term">"Cementing its position"</span><span class="def">Establishing something as durable infrastructure, not just a temporary lead. MCP "cementing itself as infrastructure."</span></div>
+    <div class="word-item"><span class="term">"Compress the capability gap"</span><span class="def">Reduce the performance distance between competitors. The gap between AI labs is now measured in weeks, not years.</span></div>
+    <div class="word-item"><span class="term">"Signal-boosted"</span><span class="def">When a prominent figure amplifies a message, lending it credibility by association. Emerged from Twitter/X culture, now in mainstream tech journalism.</span></div>
+    <div class="word-item"><span class="term">"Placing bets"</span><span class="def">Making strategic investments under uncertainty. More honest than "strategic priorities" — implies risk is acknowledged, not managed away.</span></div>
+    <div class="word-item"><span class="term">"Converging trends"</span><span class="def">Multiple dynamics arriving at the same inflection simultaneously. Signals systemic change, not isolated events.</span></div>
+  </div>
+
+</div>
+      </div>
+    </div>
+  </div>
+  <div class="day-section" id="day01-march26-2026">
+    <div class="day-header" onclick="toggleDay('day01-march26-2026')">
+      <div class="dh-left">
+        <span class="dh-num">Day 001</span>
+        <span class="dh-date">March 26, 2026</span>
+        <span class="dh-summary">Agentic AI · Thinking Fast & Slow · PREP</span>
+      </div>
+      <span class="dh-arrow" id="arrow-day01-march26-2026">▼</span>
+    </div>
+    <div class="day-body day-closed" id="body-day01-march26-2026">
+      <div class="day-inner theme-dark">
+        <div style="margin-top:4px; font-size:12px; color: var(--muted);">Executive Communication · Tech/AI Focus</div>
+  </div>
+  <div class="masthead-date">March 26, 2026</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SECTION 1 — TECH CONCEPT                  -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="section-block">
+  <div class="section-label">01 · Daily Tech Concept</div>
+
+  <h1>Agentic AI:<br>From Chatbot to Coworker</h1>
+
+  <p style="color: var(--muted); font-size:14px; margin-bottom:28px;">
+    <span class="tag">AI Agents</span> <span class="tag">Enterprise AI</span> <span class="tag">Future of Work</span>
+  </p>
+
+  <h3>The Concept</h3>
+  <p>
+    For three years, AI was a conversationalist — you asked, it answered, it stopped. <em>Agentic AI</em> breaks that pattern. An AI agent doesn't wait for your next prompt. It receives a goal, breaks it into steps, selects tools, executes, checks its own output, course-corrects, and delivers a result — often across multiple software systems — without hand-holding.
+  </p>
+  <p>
+    This week, <strong>GPT-5.4</strong> crossed a threshold: it scored 75% on OSWorld-V, a benchmark that simulates real desktop tasks. The human baseline is 72.4%. That is the first time an AI system has matched white-collar knowledge work in a controlled test. Jensen Huang declared OpenClaw — the open-source agentic framework that lets AI agents operate through iMessage, Slack, or WhatsApp — the "next ChatGPT." He called it the agentic operating system the industry has been waiting for.
+  </p>
+
+  <div class="analogy-box">
+    <h3 style="margin-top:0;">The Analogy</h3>
+    <p style="margin-bottom:0;">
+      Think of previous AI as a brilliant intern who answers every question perfectly — but sits idle until you come back with the next one. Agentic AI is the transition from intern to <em>autonomous contractor</em>: you hand them a project brief on Monday, and they email you the deliverable on Friday, having made hundreds of micro-decisions along the way. The question is no longer "can it answer?" It's "can I trust it to act?"
+    </p>
+  </div>
+
+  <h3>How to Speak to It — Executive Mode</h3>
+  <p>When this comes up in a board room or podcast, don't lead with the technology. Lead with the organizational implication:</p>
+
+  <div class="callout">
+    <p style="margin-bottom:8px;"><em>"We are not in the chatbot era anymore. We're in the era of the digital workforce. The question every executive should be asking right now is not 'how do we use AI?' — it's 'what does our org chart look like when AI handles the routine cognitive layer?' The companies that answer that question first will have a structural cost advantage that compounds every quarter."</em></p>
+  </div>
+
+  <p>Layer in the specific data point when pressed:</p>
+  <div class="callout green">
+    <p style="margin-bottom:0;"><em>"GPT-5.4 just matched human performance on real desktop knowledge work. That's not a marketing benchmark — that's the threshold moment. We can now, for the first time, credibly say some classes of white-collar work are automatable at scale."</em></p>
+  </div>
+
+  <h3>Peripheral &amp; Opposing Arguments — For Critical Thinking</h3>
+
+  <p><strong>The bull case (lean into this):</strong> Every major technology platform — PC, internet, mobile — created more jobs than it destroyed at the macro level. AI agents are likely the next productivity multiplier, not the final one.</p>
+
+  <p><strong>The bear case (steelman this):</strong> Previous platforms augmented physical or distributional capabilities. Agentic AI directly targets cognitive labor — the category humans thought was permanently safe. The economic disruption could be faster, more concentrated, and less easily reabsorbed.</p>
+
+  <p><strong>The governance gap (the sophisticated angle):</strong> NVIDIA's NemoClaw enterprise stack ships a "privacy router" that monitors all agent outgoing communications. That tells you something: even the optimists building this technology know that <em>trust infrastructure</em> for agents doesn't exist yet. We're deploying autonomous digital coworkers without the audit trails, liability frameworks, or institutional norms that govern human coworkers. That is the underappreciated risk.</p>
+
+  <h3>Sound Like an Expert — Framing Toolkit</h3>
+  <ul>
+    <li><strong>"The shift from tool to actor"</strong> — AI going from something you use to something that acts on your behalf.</li>
+    <li><strong>"Trust infrastructure"</strong> — the governance, audit, and accountability layer that agentic AI currently lacks.</li>
+    <li><strong>"Cognitive labor arbitrage"</strong> — the economic mechanism by which agent AI will reprice knowledge work.</li>
+    <li>Drop in: <em>"The benchmark that matters isn't Turing. It's whether the agent can book my flight and update my CRM without me checking its work."</em></li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SECTION 2 — BOOK                          -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="section-block">
+  <div class="section-label">02 · Book of the Day</div>
+
+  <h1>Thinking, Fast and Slow</h1>
+  <p style="color: var(--muted); font-size: 14px; margin-bottom: 28px;">Daniel Kahneman · 2011 · Psychology / Decision-Making <span class="tag">Legendary</span></p>
+
+  <h3>Why This Book, Why Today</h3>
+  <p>
+    Kahneman won the Nobel Prize in Economics for proving that humans are not rational actors — we are fast, pattern-matching, narrative-seeking animals who occasionally do slow, deliberate reasoning. In an era where AI agents make decisions faster than any human can supervise, understanding <em>how humans actually think</em> is the prerequisite to understanding what we're actually delegating — and what we're incapable of supervising.
+  </p>
+
+  <h3>Core Ideas You Can Reapply</h3>
+
+  <p><strong>System 1 vs. System 2.</strong> System 1 is fast, intuitive, automatic. System 2 is slow, effortful, deliberate. Most of our lives run on System 1. The problem: System 1 is riddled with cognitive biases — availability heuristic, anchoring, the halo effect. We mistake fluency for accuracy, familiarity for truth.</p>
+
+  <p><strong>The practical application:</strong> Every high-stakes decision you make in business — M&amp;A, hiring, strategy bets — is largely driven by System 1 masquerading as System 2. The executive who knows this builds <em>deliberate friction</em> into decisions: pre-mortems, red teams, mandatory waiting periods.</p>
+
+  <p><strong>The AI connection:</strong> AI agents are pure System 1 at scale — extraordinarily fast, pattern-matched on human data, but exhibiting the same class of errors. Confident, fluent, occasionally catastrophically wrong. Deploying agentic AI without System 2 oversight is like running an organization entirely on gut instinct.</p>
+
+  <div class="callout">
+    <p style="margin-bottom:0;"><em>"The confidence we feel in our judgments is not a reliable signal of their accuracy. Speed of thought and quality of thought are different things — and we spend our careers confusing them."</em> — reframing Kahneman for a business context</p>
+  </div>
+
+  <h3>Quote-Worthy Phrases</h3>
+  <blockquote>"Nothing in life is as important as you think it is, while you are thinking about it."</blockquote>
+  <blockquote>"A reliable way to make people believe in falsehoods is frequent repetition, because familiarity is not easily distinguished from truth."</blockquote>
+
+  <h3>In a Debate Setting</h3>
+  <p><strong>Rebuttal to "AI will make better decisions than humans":</strong> AI was trained on human output — which was largely System 1. It inherited our biases at scale, without our occasional System 2 correction. The question is not whether machines are biased. They are. The question is whether their biases are more predictable and correctable than ours.</p>
+  <p><strong>Peripheral support — for broader arguments:</strong> Behavioral economics (Thaler, Sunstein's "nudge theory") built directly on Kahneman's foundation. The design of any system that interacts with humans — pricing, policy, AI interfaces — is fundamentally an exercise in understanding cognitive biases.</p>
+
+  <div class="prompt-box">
+    <span class="prompt-label">💬 Critical Thinking Prompt</span>
+    <p><strong>Prompt:</strong> If human judgment is systematically biased (Kahneman), and AI is trained on the outputs of that biased judgment, what does that mean for the long-term reliability of AI-assisted decision-making in organizations? Where does this logic break down?</p>
+    <hr style="border-color: var(--border); margin: 14px 0;">
+    <p><em>Example answer (reference only — form your own first):</em></p>
+    <p>The logic holds for AI systems trained purely to replicate human decisions — like early content recommendation algorithms that learned to maximize engagement by amplifying outrage, a bias humans had but couldn't see at scale. It partially breaks down in two places: first, where AI is trained on <em>structured outcomes</em> rather than human opinions — actuarial data, physics simulations — it can correct human bias, not inherit it. Second, AI bias is at least legible and auditable in principle; human bias lives in unconscious heuristics that resist inspection. The honest answer is that we're at the beginning of a long calibration period where we have to learn which decisions to trust to which systems — and that requires epistemic humility we don't culturally practice yet.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--  SECTION 3 — COMM PACK                     -->
+<!-- ═══════════════════════════════════════════ -->
+
+<div class="section-block">
+  <div class="section-label">03 · Daily Comm Pack</div>
+  <h1>Framework + Word Bank</h1>
+
+  <h2 style="margin-top: 24px;">3A · Framework: The PREP Method</h2>
+  <p style="color: var(--muted); font-size: 13px; margin-bottom: 20px;">Source: Classic executive communication — widely cited by McKinsey facilitators and executive coaches for impromptu speaking.</p>
+
+  <p><strong>What it is:</strong> A four-part structure for answering any question on the spot, in a way that sounds structured, confident, and complete. The antidote to rambling.</p>
+
+  <div class="framework-box">
+    <div class="framework-step">
+      <div class="step-num">P</div>
+      <div class="step-content">
+        <strong>Point — Lead with your answer</strong>
+        <span>State your position immediately. Don't build to it. Executives don't have patience for warm-ups.</span>
+      </div>
+    </div>
+    <div class="framework-step">
+      <div class="step-num">R</div>
+      <div class="step-content">
+        <strong>Reason — Why you hold that view</strong>
+        <span>One or two crisp reasons. Not five. Five reasons is noise.</span>
+      </div>
+    </div>
+    <div class="framework-step">
+      <div class="step-num">E</div>
+      <div class="step-content">
+        <strong>Example — Make it concrete</strong>
+        <span>A data point, an analogy, or a story. This is what makes the abstract land.</span>
+      </div>
+    </div>
+    <div class="framework-step" style="margin-bottom:0;">
+      <div class="step-num">P</div>
+      <div class="step-content">
+        <strong>Point (restated) — Close with authority</strong>
+        <span>Return to your answer. Don't trail off. This is what they remember.</span>
+      </div>
+    </div>
+  </div>
+
+  <p><strong>Applied to today's topic</strong> — if asked in a board meeting: <em>"Should we be investing in agentic AI now?"</em></p>
+
+  <div class="callout green">
+    <p style="margin-bottom:6px;"><strong>[P]</strong> Yes — the window for early-mover advantage is narrow and closing fast.</p>
+    <p style="margin-bottom:6px;"><strong>[R]</strong> Two reasons: agent benchmarks just crossed human performance thresholds, and the open-source infrastructure to build on is now free.</p>
+    <p style="margin-bottom:6px;"><strong>[E]</strong> GPT-5.4 matched human performance on real desktop knowledge work this month. The tools to run agents on your existing stack — Slack, your CRM, your ERP — are available today at zero licensing cost.</p>
+    <p style="margin-bottom:0;"><strong>[P]</strong> Companies that wait for the category to "mature" will be buying in at the price of a proven market. The asymmetric bet is now.</p>
+  </div>
+
+  <h2 style="margin-top: 40px;">3B · Word Bank</h2>
+
+  <h3>Advanced Lexicon</h3>
+  <div class="word-grid">
+    <div class="word-item"><span class="term">Epistemic humility</span><span class="def">Awareness of the limits of one's own knowledge. Use when discussing AI overconfidence or decision frameworks.</span></div>
+    <div class="word-item"><span class="term">Agentic</span><span class="def">Capable of autonomous goal-directed action. Now standard in AI discourse; use precisely.</span></div>
+    <div class="word-item"><span class="term">Legibility</span><span class="def">How interpretable or auditable a system/decision is. Central to AI governance debates.</span></div>
+    <div class="word-item"><span class="term">Asymmetric</span><span class="def">A bet or risk where upside and downside are not proportional. Beloved by sophisticated investors and strategists.</span></div>
+    <div class="word-item"><span class="term">Inflection point</span><span class="def">A moment of structural change in a trend. Overused — earn it by pairing with specific evidence.</span></div>
+    <div class="word-item"><span class="term">Compounding</span><span class="def">Advantages that grow on themselves over time. Use for talent, data, and market-position arguments.</span></div>
+    <div class="word-item"><span class="term">Arbitrage</span><span class="def">Exploiting a gap or inefficiency. "Cognitive labor arbitrage" — AI performing tasks priced as human labor.</span></div>
+    <div class="word-item"><span class="term">Structural</span><span class="def">Baked into the system, not temporary. "A structural cost advantage" vs. a cyclical one.</span></div>
+    <div class="word-item"><span class="term">Threshold moment</span><span class="def">The specific point at which something crosses from theoretical to consequential. More precise than "milestone."</span></div>
+    <div class="word-item"><span class="term">Steelman</span><span class="def">The strongest version of an opposing argument. Shows sophistication — you win more credibly when you've engaged the best counterargument.</span></div>
+  </div>
+
+  <h3>Wrapper Phrases</h3>
+  <div class="word-grid">
+    <div class="word-item"><span class="term">"The question isn't X — it's Y."</span><span class="def">Reframes the conversation. Shows you're operating at a higher level of analysis.</span></div>
+    <div class="word-item"><span class="term">"Let me give you the honest version."</span><span class="def">Signals candor. Cuts through corporate hedging. Use sparingly — it's powerful because it implies others aren't.</span></div>
+    <div class="word-item"><span class="term">"If I'm being precise about this…"</span><span class="def">A way to upgrade the conversation's rigor without sounding pedantic.</span></div>
+    <div class="word-item"><span class="term">"The conventional take is X. Here's where it breaks down."</span><span class="def">Establishes awareness of the mainstream view, then demonstrates independent thinking.</span></div>
+    <div class="word-item"><span class="term">"What that actually means in practice is…"</span><span class="def">Translates abstraction into operational reality. Executive-level move.</span></div>
+    <div class="word-item"><span class="term">"The underappreciated part of this is…"</span><span class="def">Signals you've thought further than the obvious. Excellent for podcasts and interviews.</span></div>
+    <div class="word-item"><span class="term">"Let me give you the 30-second version and the 3-minute version."</span><span class="def">Offers optionality, respects the listener's time, and signals you have genuine depth.</span></div>
+    <div class="word-item"><span class="term">"To be fair to the other side…"</span><span class="def">Preface to steelmanning. Builds credibility by showing intellectual honesty.</span></div>
+    <div class="word-item"><span class="term">"The data point that changed my view was…"</span><span class="def">Signals you're evidence-driven and intellectually honest. Rare and memorable.</span></div>
+    <div class="word-item"><span class="term">"Where I'd push back on that framing is…"</span><span class="def">Disagrees without dismissing. Confident, not combative.</span></div>
+  </div>
+
+  <h3>Analogies</h3>
+  <div class="word-grid">
+    <div class="word-item"><span class="term">Agentic AI = the autonomous contractor</span><span class="def">You give the brief Monday; the deliverable arrives Friday. No hand-holding required — or available.</span></div>
+    <div class="word-item"><span class="term">System 1 bias = the autopilot that doesn't know it's flying</span><span class="def">Competent, fast, and potentially pointed at a mountain.</span></div>
+    <div class="word-item"><span class="term">Trust infrastructure = the audit trail for a digital coworker</span><span class="def">You wouldn't give an employee expense authority without receipts. Why give an AI agent CRM access without logs?</span></div>
+    <div class="word-item"><span class="term">Open-source AI = the Linux moment for intelligence</span><span class="def">Once the stack becomes free and permissive, competition moves up to the application layer — and fast.</span></div>
+    <div class="word-item"><span class="term">Cognitive bias at AI scale = one person's bad judgment, broadcast at a million decisions per second</span><span class="def">The problem isn't that AI makes errors. It's that it makes the same error everywhere, simultaneously.</span></div>
+    <div class="word-item"><span class="term">Waiting for AI to "mature" = buying the internet in 2005</span><span class="def">The infrastructure is built. The early-mover window is not infinite.</span></div>
+    <div class="word-item"><span class="term">AI benchmarks = the SAT for machines</span><span class="def">It tells you something. It doesn't tell you everything. And you still need to see how they perform on the job.</span></div>
+    <div class="word-item"><span class="term">PREP structure = the executive's hammer</span><span class="def">Every answer is a nail. Lead with the point; everything else is load-bearing evidence.</span></div>
+    <div class="word-item"><span class="term">Slow thinking in fast decisions = applying brakes on the Autobahn</span><span class="def">It saves lives — but only if you've built the habit before you need it.</span></div>
+    <div class="word-item"><span class="term">Data training on biased output = teaching a student using a textbook written by that student</span><span class="def">The loop is closed. The errors self-reinforce unless you introduce external ground truth.</span></div>
+  </div>
+
+  <h3>Idioms (WSJ / Economist register)</h3>
+  <div class="word-grid">
+    <div class="word-item"><span class="term">"Whipping into a frenzy"</span><span class="def">Describes the industry's reaction to OpenClaw — hysteria that outpaces fundamentals. TechCrunch's own framing.</span></div>
+    <div class="word-item"><span class="term">"The bar has moved"</span><span class="def">The competitive standard has shifted. Used when open-source models or new entrants reset expectations.</span></div>
+    <div class="word-item"><span class="term">"Early steps toward"</span><span class="def">Journalist's way of signaling something hasn't happened yet but the direction is clear. Use to hedge predictions elegantly.</span></div>
+    <div class="word-item"><span class="term">"Pointed questioning"</span><span class="def">Congressional or board-level scrutiny that signals real accountability, not theater.</span></div>
+    <div class="word-item"><span class="term">"Structural cost advantage"</span><span class="def">An edge that is baked into the business model — not dependent on market conditions or effort.</span></div>
+    <div class="word-item"><span class="term">"Reverberate"</span><span class="def">Effects that echo beyond the immediate event. "The implications continue to reverberate." More precise than "impact."</span></div>
+    <div class="word-item"><span class="term">"Inflection point" (earned)</span><span class="def">The Economist uses this only when trend data supports a directional break. Pair it with a number or it reads as hype.</span></div>
+    <div class="word-item"><span class="term">"Operationalize"</span><span class="def">To move from strategy to execution. "The challenge is not understanding AI — it's operationalizing it."</span></div>
+    <div class="word-item"><span class="term">"Frothy"</span><span class="def">Valuations or enthusiasm detached from fundamentals. WSJ's polite word for a bubble forming.</span></div>
+    <div class="word-item"><span class="term">"The mix of skills"</span><span class="def">Atlassian CEO Cannon-Brookes used this in layoff communications — a diplomatic way to describe AI-driven role restructuring without saying "replaced."</span></div>
+  </div>
+</div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script>
+function toggleDay(slug) {
+  const body  = document.getElementById('body-' + slug);
+  const arrow = document.getElementById('arrow-' + slug);
+  const open  = body.classList.toggle('day-open');
+  body.classList.toggle('day-closed', !open);
+  arrow.textContent = open ? '▲' : '▼';
+}
+
+function jumpTo(slug) {
+  const body  = document.getElementById('body-' + slug);
+  const arrow = document.getElementById('arrow-' + slug);
+  if (!body.classList.contains('day-open')) {
+    body.classList.add('day-open');
+    body.classList.remove('day-closed');
+    arrow.textContent = '▲';
+  }
+  document.getElementById(slug).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setActive(slug);
+}
+
+function setActive(slug) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const n = document.getElementById('nav-' + slug);
+  if (n) n.classList.add('active');
+}
+
+// scroll spy
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) setActive(e.target.id); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.day-section').forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
